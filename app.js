@@ -91,6 +91,15 @@
   const zoneShort = (z) => { const m = /Zone\s*\d+/i.exec(z || ''); return m ? m[0] : (z || 'Unzoned'); };
   const firstName = (s) => String(s || '').split('/')[0].trim();
 
+  /**
+   * Sheet cells sometimes hold a Wikipedia/Wikimedia *page* link (e.g. ".../wiki/X#/media/File:Y.jpg")
+   * instead of the image itself. Turn those into a direct image via Special:FilePath.
+   */
+  function imageUrl(u) {
+    const m = /(?:wikipedia|wikimedia)\.org\/wiki\/(?:[^#]*#\/media\/)?File:([^?#]+)/i.exec(String(u || ''));
+    return m ? 'https://commons.wikimedia.org/wiki/Special:FilePath/' + m[1] + '?width=1200' : u;
+  }
+
   function photoSrc(ph, size) {
     if (!ph) return '';
     if (ph.fileId) return 'https://lh3.googleusercontent.com/d/' + ph.fileId + '=w' + (size || 1200);
@@ -209,7 +218,7 @@
     const s = speciesOf(p);
     let thumb;
     if (garden) thumb = imgTag(garden, 'thumb', 200, '');
-    else if (s.bloomImage) thumb = '<img class="thumb" src="' + esc(s.bloomImage) + '" alt="" loading="lazy">';
+    else if (s.bloomImage) thumb = '<img class="thumb" src="' + esc(imageUrl(s.bloomImage)) + '" alt="" loading="lazy">';
     else thumb = '<div class="thumb placeholder">' + esc((p.name || '?').charAt(0)) + '</div>';
     const last = journalFor(p.id)[0];
     return '<a class="plant-card" href="#/p/' + esc(p.id) + '">' + thumb +
@@ -233,7 +242,7 @@
     // Hero: our own photo first; the bloom view prefers our bloom photo, then the online reference.
     const mode = heroMode[p.id] || (gardenPhotos.length ? 'garden' : 'bloom');
     const bloomShot = bloomPhotos[0] ? { html: imgTag(bloomPhotos[0], '', 1600, p.name + ' in bloom'), credit: 'Our garden · ' + fmtDate(bloomPhotos[0].at, { hour: undefined, minute: undefined, weekday: undefined }) }
-      : s.bloomImage ? { html: '<img src="' + esc(s.bloomImage) + '" alt="' + esc(p.name) + ' in bloom">', credit: s.bloomCredit || 'Reference image' } : null;
+      : s.bloomImage ? { html: '<img src="' + esc(imageUrl(s.bloomImage)) + '" alt="' + esc(p.name) + ' in bloom">', credit: s.bloomCredit || 'Reference image' } : null;
     const gardenShot = gardenPhotos[0] ? { html: imgTag(gardenPhotos[0], '', 1600, p.name + ' in our garden'), credit: fmtDate(gardenPhotos[0].at, { hour: undefined, minute: undefined, weekday: undefined }) } : null;
     const shot = mode === 'garden' ? gardenShot : bloomShot;
     // Plants whose scent is in the leaves (or that never bloom) get a "Leaf" view instead of "In bloom".
