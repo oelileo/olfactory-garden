@@ -53,7 +53,9 @@ h3 { font-size: 1.15rem; }
 
 /* ---------- top bar */
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0 8px; }
-.topbar .brand { font-family: var(--serif); font-size: 1.15rem; letter-spacing: .02em; text-decoration: none; }
+.topbar .brand { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--primary); }
+.logo { display: block; width: 104px; height: 26px; background: currentColor; -webkit-mask: url(images/logo.svg) left center / contain no-repeat; mask: url(images/logo.svg) left center / contain no-repeat; }
+.brand-sub { font-family: var(--serif); font-size: .95rem; letter-spacing: .04em; color: var(--ink-soft); }
 .iconbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: .85rem; text-decoration: none; }
 
 /* ---------- home */
@@ -85,6 +87,8 @@ h3 { font-size: 1.15rem; }
 .plant-hero { margin: 4px -16px 0; position: relative; background: var(--surface-2); aspect-ratio: 4 / 3; overflow: hidden; }
 @media (min-width: 760px) { .plant-hero { margin: 4px 0 0; border-radius: var(--radius); } }
 .plant-hero img { width: 100%; height: 100%; object-fit: cover; }
+.plant-hero .nature { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 24px; text-align: center; color: var(--ink-soft); background: radial-gradient(circle at 50% 40%, var(--surface), var(--surface-2)); }
+.plant-hero .nature svg { width: 96px; height: 96px; }
 .plant-hero .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--ink-soft); }
 .hero-toggle { position: absolute; left: 12px; bottom: 12px; display: flex; background: rgba(20, 24, 26, .55); backdrop-filter: blur(8px); border-radius: 999px; padding: 3px; }
 .hero-toggle button { border: 0; background: transparent; color: #fff; padding: 6px 12px; border-radius: 999px; font-size: .82rem; cursor: pointer; }

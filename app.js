@@ -11,6 +11,8 @@
   const SOURCES = ['Flowers', 'Leaves (crushed)', 'In the air', 'Fruit / peel'];
   const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
   const RECENT_DAYS = 14;
+  // Shown when a plant has no bloom/leaf image anywhere yet: a quiet leaf illustration in brand colours.
+  const NATURE_FALLBACK = '<div class="nature"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14C92 30 100 72 60 106 20 72 28 30 60 14z" fill="var(--primary-soft)" stroke="var(--primary)" stroke-width="2.5"/><path d="M60 26v76M60 50l-16-12M60 50l16-12M60 70l-20-14M60 70l20-14M60 88l-14-10M60 88l14-10" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg><span>No photo yet. Add one with “Add photo”.</span></div>';
 
   const app = document.getElementById('app');
   let data = null;
@@ -138,7 +140,7 @@
   }
 
   function topbar(right) {
-    return '<header class="topbar"><a class="brand" href="#/">Olfactory Garden</a>' + (right || '') + '</header>';
+    return '<header class="topbar"><a class="brand" href="#/" aria-label="Oelileo Olfactory Garden home"><span class="logo" aria-hidden="true"></span><span class="brand-sub">Olfactory Garden</span></a>' + (right || '') + '</header>';
   }
 
   // ------------------------------------------------------------ router
@@ -234,7 +236,9 @@
       : s.bloomImage ? { html: '<img src="' + esc(s.bloomImage) + '" alt="' + esc(p.name) + ' in bloom">', credit: s.bloomCredit || 'Reference image' } : null;
     const gardenShot = gardenPhotos[0] ? { html: imgTag(gardenPhotos[0], '', 1600, p.name + ' in our garden'), credit: fmtDate(gardenPhotos[0].at, { hour: undefined, minute: undefined, weekday: undefined }) } : null;
     const shot = mode === 'garden' ? gardenShot : bloomShot;
-    const heroEmpty = mode === 'garden' ? 'No garden photo yet.<br>Tap “Add photo” to show where it lives.' : 'No bloom image yet.';
+    // Plants whose scent is in the leaves (or that never bloom) get a "Leaf" view instead of "In bloom".
+    const refLabel = /^leav/i.test(s.source || '') ? 'Leaf' : 'In bloom';
+    const heroEmpty = mode === 'garden' ? '<div class="empty">No garden photo yet.<br>Tap “Add photo” to show where it lives.</div>' : NATURE_FALLBACK;
 
     const facts = [
       ['Fragrance family', s.family], ['Scent notes', s.notes], ['Where the scent lives', s.source],
@@ -243,8 +247,8 @@
 
     app.innerHTML =
       topbar('<a class="iconbtn" href="#/">All plants</a>') +
-      '<div class="plant-hero">' + (shot ? shot.html : '<div class="empty">' + heroEmpty + '</div>') +
-      '<div class="hero-toggle" role="group" aria-label="Image"><button data-hero="garden" aria-pressed="' + (mode === 'garden') + '">In our garden</button><button data-hero="bloom" aria-pressed="' + (mode === 'bloom') + '">In bloom</button></div>' +
+      '<div class="plant-hero">' + (shot ? shot.html : heroEmpty) +
+      '<div class="hero-toggle" role="group" aria-label="Image"><button data-hero="garden" aria-pressed="' + (mode === 'garden') + '">In our garden</button><button data-hero="bloom" aria-pressed="' + (mode === 'bloom') + '">' + refLabel + '</button></div>' +
       (shot && shot.credit ? '<div class="hero-credit">' + esc(shot.credit) + '</div>' : '') + '</div>' +
 
       '<section class="plant-head"><div class="idtag">No. ' + pad(p.id) + ' · ' + esc(zoneShort(p.zone)) + '</div>' +

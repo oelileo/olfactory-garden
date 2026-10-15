@@ -53,3 +53,8 @@ After later script edits, go to *Deploy → Manage deployments → Edit → Vers
 python3 -m http.server 8766
 ```
 Open `http://localhost:8766/?demo`. This needs `demo.json`, a gitignored fixture. Writes in demo mode stay in memory.
+
+## Image credits
+
+- `images/niam-hom-leaf.jpg`: cropped from "Saplings of Niamhom (Strobilanthes tonkinensis)" by Susawaengsup, Jaradrattanapaiboon et al., [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Saplings_of_Niamhom_(Strobilanthes_tonkinensis).png), CC BY 4.0.
+- Bloom images linked from the Species tab carry their own credit in the *Bloom Image Credit* column.
