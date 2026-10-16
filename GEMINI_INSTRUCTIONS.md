@@ -45,7 +45,7 @@ Columns, in order:
 3. Region / Culture
 4. Story  (3–5 plain, warm sentences. Only things a reputable source supports; hedge anything uncertain with "is said to" or "often")
 5. Source  (book, article or website a reader could check)
-6. Added By  (always "Gemini — verify")
+6. Added By  (source link)
 7. Timestamp  (leave blank)
 
 If I tell you the species is already in the garden, skip Table 2 and Table 3 and only give Table 1.
