@@ -149,7 +149,7 @@
   }
 
   function topbar(right) {
-    return '<header class="topbar"><a class="brand" href="#/" aria-label="Oelileo Olfactory Garden home"><span class="logo" aria-hidden="true"></span><span class="brand-sub">Olfactory Garden</span></a>' + (right || '') + '</header>';
+    return '<header class="topbar"><a class="brand" href="#/"><span class="brand-name">Olfactory Garden</span></a>' + (right || '') + '</header>';
   }
 
   // ------------------------------------------------------------ router
