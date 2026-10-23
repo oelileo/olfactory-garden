@@ -73,6 +73,8 @@ function onOpen() {
     .createMenu('Olfactory Garden')
     .addItem('1. Set up / sync app tabs', 'setup')
     .addItem('Fetch missing bloom images (Wikipedia)', 'fetchBloomImages')
+    .addSeparator()
+    .addItem('Clean up sheet layout (backs up first)', 'cleanUpLayout')
     .addToUi();
 }
 
@@ -148,6 +150,86 @@ function fetchJson_(url) {
     console.warn('Fetch failed: ' + url + ' — ' + err);
     return null;
   }
+}
+
+// ---------------------------------------------------------------- layout cleanup
+
+// Tabs whose header row isn't in row 1. The cleanup finds the header by this text.
+const HEADER_MARKERS = { 'Master Catalogue': 'Catalog ID', 'Box Tracker': 'Box / Planned Trough' };
+
+/**
+ * One-time tidy of the whole spreadsheet: backs up the file, then on every tab moves the
+ * data so the header is row 1 and data starts in column A, drops title banners and blank
+ * rows/columns, and replaces decorative formatting with one plain style.
+ */
+function cleanUpLayout() {
+  const ui = SpreadsheetApp.getUi();
+  const ok = ui.alert('Clean up sheet layout',
+    'This first saves a backup copy of the whole spreadsheet in the same Drive folder. ' +
+    'Then every tab is moved to start at A1, with the title banners, blank rows and decorative ' +
+    'formatting removed. Your data is not changed.\n\nContinue?', ui.ButtonSet.OK_CANCEL);
+  if (ok !== ui.Button.OK) return;
+
+  const ss = SpreadsheetApp.getActive();
+  const file = DriveApp.getFileById(ss.getId());
+  const parents = file.getParents();
+  const stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  const backup = file.makeCopy(ss.getName() + ' (backup ' + stamp + ')', parents.hasNext() ? parents.next() : DriveApp.getRootFolder());
+
+  const report = ss.getSheets().map(function (sh) { return sh.getName() + ': ' + tidySheet_(sh, HEADER_MARKERS[sh.getName()]); });
+  ui.alert('Layout cleaned up', 'Backup saved as "' + backup.getName() + '".\n\n' + report.join('\n'), ui.ButtonSet.OK);
+}
+
+/** Returns the tidy table (header first) as values, keeping any formulas. Pure: no Sheets calls. */
+function extractTable_(values, formulas, marker) {
+  const blank = function (v) { return v === '' || v === null; };
+  let top = -1, left = -1;
+  for (let r = 0; r < values.length && top < 0; r++) {
+    for (let c = 0; c < values[r].length; c++) {
+      const v = values[r][c];
+      if (marker ? String(v).trim().indexOf(marker) === 0 : !blank(v)) { top = r; left = c; break; }
+    }
+  }
+  if (top < 0) return [];
+  let rows = values.slice(top).map(function (row, i) {
+    return row.slice(left).map(function (v, c) {
+      const f = formulas[top + i][left + c];
+      if (f) return f;
+      // Keep text like "007" as text instead of letting Sheets turn it into 7.
+      if (typeof v === 'string' && /^0\d/.test(v) && !isNaN(Number(v))) return "'" + v;
+      return v;
+    });
+  });
+  rows = rows.filter(function (row) { return row.some(function (v) { return !blank(v); }); });
+  let width = 0;
+  rows.forEach(function (row) { row.forEach(function (v, c) { if (!blank(v)) width = Math.max(width, c + 1); }); });
+  return rows.map(function (row) { return row.slice(0, width); });
+}
+
+function tidySheet_(sh, marker) {
+  const all = sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns());
+  const table = extractTable_(all.getValues(), all.getFormulas(), marker);
+  if (!table.length) return 'empty, skipped';
+
+  all.breakApart();
+  all.clearDataValidations();
+  sh.clear();
+  sh.clearConditionalFormatRules();
+  sh.getBandings().forEach(function (b) { b.remove(); });
+  if (sh.getFilter()) sh.getFilter().remove();
+  sh.setFrozenColumns(0);
+  sh.setRowHeights(1, sh.getMaxRows(), 21);
+
+  const rows = table.length, cols = table[0].length;
+  sh.getRange(1, 1, rows, cols).setValues(table)
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP).setVerticalAlignment('top');
+  sh.getRange(1, 1, 1, cols).setFontWeight('bold');
+  sh.setFrozenRows(1);
+  for (let c = 0; c < cols; c++) {
+    const longest = Math.max.apply(null, table.map(function (r) { return String(r[c]).length; }));
+    sh.setColumnWidth(c + 1, longest > 60 ? 320 : longest > 25 ? 200 : 120);
+  }
+  return (rows - 1) + ' rows × ' + cols + ' columns, now starting at A1';
 }
 
 // ---------------------------------------------------------------- web API
@@ -317,14 +399,14 @@ function ensureSheet_(ss, name, headers) {
   let sh = ss.getSheetByName(name);
   if (!sh) sh = ss.insertSheet(name);
   if (sh.getLastRow() === 0) {
-    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#e8efe6');
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
     sh.setFrozenRows(1);
   } else {
     // Append any new columns added in later versions without disturbing existing ones.
     const have = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     headers.forEach(function (h) {
       if (have.indexOf(h) === -1) {
-        sh.getRange(1, sh.getLastColumn() + 1).setValue(h).setFontWeight('bold').setBackground('#e8efe6');
+        sh.getRange(1, sh.getLastColumn() + 1).setValue(h).setFontWeight('bold');
       }
     });
   }
